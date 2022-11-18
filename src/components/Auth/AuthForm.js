@@ -1,12 +1,17 @@
-import { useState, useRef } from "react";
-
+import { useState, useRef, useContext } from "react";
+import { useHistory } from "react-router-dom";
+import AuthContext from "../../store/auth-context";
 import classes from "./AuthForm.module.css";
 
 const AuthForm = () => {
-  const [isLogin, setIsLogin] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
   const emailInputRef = useRef();
   const passwordInputRef = useRef();
+  const history = useHistory();
+
+  const authCtx = useContext(AuthContext);
+
+  const [isLogin, setIsLogin] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   const switchAuthModeHandler = () => {
     setIsLogin((prevState) => !prevState);
@@ -19,23 +24,59 @@ const AuthForm = () => {
     const enteredPassword = passwordInputRef.current.value;
 
     setIsLoading(true);
+    let url;
 
     if (isLogin) {
+      url =
+        "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyBZhlN2uMggCYzxEKBlPQyX--E1NfmcHlk";
+
+      fetch(url, {
+        method: "POST",
+        body: JSON.stringify({
+          email: enteredEmail,
+          password: enteredPassword,
+          returnSecureToken: true,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+        .then((res) => {
+          setIsLoading(false);
+          if (res.ok) {
+            return res.json();
+          } else {
+            return res.json().then((data) => {
+              let errorMessage = "Authentication failed!"; // note how objects are displayed in the browser
+              // if (data && data.error && data.error.message) {
+              //   errorMessage = data.error.message;
+              // }
+              throw new Error(errorMessage);
+            });
+          }
+        })
+        .then((data) => {
+          authCtx.login(data.idToken);
+          history.replace("/");
+        })
+        .catch((err) => {
+          alert(err.message);
+        }); //catching error from else block
     } else {
-      fetch(
-        "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyBZhlN2uMggCYzxEKBlPQyX--E1NfmcHlk",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            email: enteredEmail,
-            password: enteredPassword,
-            returnSecureToken: true,
-          }),
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      ).then((res) => {
+      url =
+        "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyBZhlN2uMggCYzxEKBlPQyX--E1NfmcHlk";
+
+      fetch(url, {
+        method: "POST",
+        body: JSON.stringify({
+          email: enteredEmail,
+          password: enteredPassword,
+          returnSecureToken: true,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }).then((res) => {
         setIsLoading(false);
         if (res.ok) {
           //
