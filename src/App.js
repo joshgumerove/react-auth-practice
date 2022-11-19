@@ -40,3 +40,4 @@ export default App;
 
 // note: only grant access to the auth page if the user is not logged in
 // can configure page protections however would like
+// note: tokens expire after a certain duration (defualt in our case is 1 hour)
